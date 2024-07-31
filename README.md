@@ -154,7 +154,7 @@ Breakdown:
 
 ---
 
-# FAQ
+<!-- # FAQ
 
 ### How will this exercise be evaluated?
 An engineer will review the code you submit. At a minimum they must be able to run the service and the service must provide the expected results. You
@@ -171,4 +171,4 @@ the reviewing engineer.
 
 ### How long do I have to complete the exercise?
 There is no time limit for the exercise. Out of respect for your time, we designed this exercise with the intent that it should take you a few hours. But, please
-take as much time as you need to complete the work.
+take as much time as you need to complete the work. -->
