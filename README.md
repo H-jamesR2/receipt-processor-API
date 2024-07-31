@@ -1,4 +1,4 @@
-# Receipt Processor
+# Rcpt Processor
 
 Build a webservice that fulfils the documented API. The API is described below. A formal definition is provided 
 in the [api.yml](./api.yml) file, but the information in this README is sufficient for completion of this challenge. We will use the 
@@ -10,9 +10,9 @@ Data does not need to persist when your application stops. It is sufficient to s
 
 ## Language Selection
 
-You can assume our engineers have Go and Docker installed to run your application. Go is our preferred language, but it is not a requirement for this exercise.
+Company preferred language: Go
 
-If you are using a language other than Go, the engineer evaluating your submission may not have an environment ready for your language. Your instructions should include how to get an environment in any OS that can run your project. For example, if you write your project in Javascript simply stating to "run `npm start` to start the application" is not sufficient, because the engineer may not have NPM. Providing a docker file and the required docker command is a simple way to satisfy this requirement.
+Instructions should include how to get an environment in any OS that can run your project. For example, if you write your project in Javascript simply stating to "run `npm start` to start the application" is not sufficient, because the engineer may not have NPM. Providing a docker file and the required docker command is a simple way to satisfy this requirement.
 
 ## Submitting Your Solution
 
@@ -21,11 +21,11 @@ Provide a link to a public repository, such as GitHub or BitBucket, that contain
 ---
 ## Summary of API Specification
 
-### Endpoint: Process Receipts
+### Endpoint: Process Rcpts
 
 * Path: `/receipts/process`
 * Method: `POST`
-* Payload: Receipt JSON
+* Payload: Rcpt JSON
 * Response: JSON containing an id for the receipt.
 
 Description:
