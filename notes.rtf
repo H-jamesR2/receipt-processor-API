@@ -7,7 +7,16 @@ Response: A JSON object containing the number of points awarded.
 
 --> for GET method -> set for {id}
     -> store points var to receipt object... independent of receipt;
+        -> to reduce need for frequent calls to calculate points...
     -> /receipts/{id} could output receipt itself...
     -> /receipts/{id}/{variable} 
 
--->
+--> for POST method
+    -> generate uniqueID, store uniqueID
+    -> normalize purchaseDate + purchaseTime.
+    -> trim short descriptions for each item.
+    -> set points to uint (never negative)
+
+--> Future additions:
+    -> add + improve user interface, 
+    -> add more methods + endpoints
