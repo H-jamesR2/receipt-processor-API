@@ -20,3 +20,22 @@ Response: A JSON object containing the number of points awarded.
 --> Future additions:
     -> add + improve user interface, 
     -> add more methods + endpoints
+
+
+
+=========
+--> PR Review:
+--> [Add more input Validations on variables like:
+    items, total, dates] 
+    Some input validations were missing such as missing items, malformed data, 
+    or invalid data (such as a date of 13/13/2023)
+--> [Break down points calculation] All point calculation rules are in one point calculation function. 
+    This does not follow the single responsibility principle and 
+    would make adding unit tests for individual rules harder.
+
+--> [✓ Fixed GetPoints] Point calculation occurs during the GET request. 
+    This means that the points must be calculated for every GET request 
+    instead of just calculating points once on receipt submission [initial POST request].  
+    Doing logic on a GET is an anti-pattern and should generally be avoided. 
+    [OK] Point calculation also occurs during the POST which is preferred, but this value is not used.
+--> [Include Unit Tests] No unit tests included

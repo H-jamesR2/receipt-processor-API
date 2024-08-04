@@ -88,7 +88,9 @@ func GetReceiptPoints(w http.ResponseWriter, r *http.Request, id string) {
 		http.Error(w, "Receipt not found, As such, 0 Points", http.StatusNotFound)
 		return
 	}
-	points := model.CalculatePoints(receipt)
+
+	//access stored Points for receipt @ ID
+	points := receipt.Points
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(struct {
 		Points uint `json:"points"`
