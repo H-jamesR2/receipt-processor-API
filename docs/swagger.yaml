@@ -1,0 +1,121 @@
+definitions:
+  controller.GetReceiptPointsResponse:
+    properties:
+      points:
+        type: integer
+    type: object
+  controller.ProcessReceiptResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  model.Item:
+    properties:
+      id:
+        type: integer
+      price:
+        type: string
+      receipt_id:
+        type: string
+      shortDescription:
+        type: string
+    type: object
+  model.Receipt:
+    properties:
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/model.Item'
+        type: array
+      points:
+        type: integer
+      purchaseDate:
+        type: string
+      purchaseTime:
+        type: string
+      retailer:
+        type: string
+      total:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /receipts/{id}:
+    get:
+      description: Get a receipt by ID
+      parameters:
+      - description: Receipt ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Receipt'
+        "404":
+          description: Receipt not found
+          schema:
+            type: string
+      summary: Get a receipt by ID
+      tags:
+      - receipts
+  /receipts/{id}/points:
+    get:
+      description: Get receipt points by ID
+      parameters:
+      - description: Receipt ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.GetReceiptPointsResponse'
+        "404":
+          description: Receipt not found
+          schema:
+            type: string
+      summary: Get receipt points by ID
+      tags:
+      - receipts
+  /receipts/process:
+    post:
+      consumes:
+      - application/json
+      description: Create a new receipt
+      parameters:
+      - description: Receipt
+        in: body
+        name: receipt
+        required: true
+        schema:
+          $ref: '#/definitions/model.Receipt'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.ProcessReceiptResponse'
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "500":
+          description: Failed to create receipt
+          schema:
+            type: string
+      summary: Create a receipt
+      tags:
+      - receipts
+swagger: "2.0"

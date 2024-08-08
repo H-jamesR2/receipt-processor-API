@@ -1,0 +1,188 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/receipts/process": {
+            "post": {
+                "description": "Create a new receipt",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "receipts"
+                ],
+                "summary": "Create a receipt",
+                "parameters": [
+                    {
+                        "description": "Receipt",
+                        "name": "receipt",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Receipt"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ProcessReceiptResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to create receipt",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/receipts/{id}": {
+            "get": {
+                "description": "Get a receipt by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "receipts"
+                ],
+                "summary": "Get a receipt by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Receipt ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Receipt"
+                        }
+                    },
+                    "404": {
+                        "description": "Receipt not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/receipts/{id}/points": {
+            "get": {
+                "description": "Get receipt points by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "receipts"
+                ],
+                "summary": "Get receipt points by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Receipt ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.GetReceiptPointsResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Receipt not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "controller.GetReceiptPointsResponse": {
+            "type": "object",
+            "properties": {
+                "points": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controller.ProcessReceiptResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Item": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "string"
+                },
+                "receipt_id": {
+                    "type": "string"
+                },
+                "shortDescription": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Receipt": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Item"
+                    }
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "purchaseDate": {
+                    "type": "string"
+                },
+                "purchaseTime": {
+                    "type": "string"
+                },
+                "retailer": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
