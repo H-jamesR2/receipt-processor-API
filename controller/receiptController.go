@@ -24,7 +24,7 @@ import (
 // @Param id path string true "Receipt ID"
 // @Success 200 {object} model.Receipt
 // @Failure 404 {string} string "Receipt not found"
-// @Router /receipt/{id} [get]
+// @Router /receipts/{id} [get]
 func GetReceipt(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	receipt, err := model.GetReceiptByID(config.DB, id)
@@ -45,10 +45,10 @@ func GetReceipt(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param receipt body model.Receipt true "Receipt"
-// @Success 200 {object} map[string]string{"id": "string"}
+// @Success 200 {object} ProcessReceiptResponse
 // @Failure 400 {string} string "Invalid input"
 // @Failure 500 {string} string "Failed to create receipt"
-// @Router /receipt/create [post]
+// @Router /receipts/process [post]
 func ProcessReceipt(w http.ResponseWriter, r *http.Request) {
 	var receipt model.Receipt
 	if err := json.NewDecoder(r.Body).Decode(&receipt); err != nil {
@@ -92,12 +92,12 @@ func ProcessReceipt(w http.ResponseWriter, r *http.Request) {
 
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(struct {
-		ID string `json:"id"`
-	}{
+	json.NewEncoder(w).Encode(ProcessReceiptResponse{
 		ID: receipt.ID,
 	})
 }
+
+
 
 // GetReceiptPoints godoc
 // @Summary Get receipt points by ID
@@ -105,9 +105,9 @@ func ProcessReceipt(w http.ResponseWriter, r *http.Request) {
 // @Tags receipts
 // @Produce json
 // @Param id path string true "Receipt ID"
-// @Success 200 {object} map[string]uint{"points": "uint"}
+// @Success 200 {object} GetReceiptPointsResponse
 // @Failure 404 {string} string "Receipt not found"
-// @Router /receipt/{id}/points [get]
+// @Router /receipts/{id}/points [get]
 func GetReceiptPoints(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	receipt, err := model.GetReceiptByID(config.DB, id)
@@ -118,29 +118,11 @@ func GetReceiptPoints(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(struct {
-		Points uint `json:"points"`
-	}{
+	json.NewEncoder(w).Encode(GetReceiptPointsResponse{
 		Points: receipt.Points,
 	})
 }
 
-// NotFoundHandler handles requests to non-existent endpoints
-func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	// Set the status code to 404
-	w.WriteHeader(http.StatusNotFound)
-
-	// Write a standard error message
-	response := map[string]string{
-		"error":   "Endpoint not found",
-		"message": fmt.Sprintf("The requested URL %s was not found on this server.", r.URL.Path),
-	}
-
-	// Write the response in JSON format
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
-}
 
 /*
 	Helper Functions
