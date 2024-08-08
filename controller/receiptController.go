@@ -6,57 +6,60 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"rcpt-proc-challenge-ans/config"
 	"rcpt-proc-challenge-ans/model"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
-// GET MethodS
+// GetReceipt godoc
+// @Summary Get a receipt by ID
+// @Description Get a receipt by ID
+// @Tags receipts
+// @Produce json
+// @Param id path string true "Receipt ID"
+// @Success 200 {object} model.Receipt
+// @Failure 404 {string} string "Receipt not found"
+// @Router /receipt/{id} [get]
 func GetReceipt(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/receipts/"), "/")
-	//path := strings.TrimPrefix(r.URL.Path, "/receipts/")
-	if path == "" {
-		// Return all receipts
-		receipts := model.GetAllReceipts()
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(receipts)
-		return
-	}
-
-	// Check if the path ends with "/points" to route to the GetReceiptPoints handler
-	if strings.HasSuffix(path, "/points") {
-		id := strings.TrimSuffix(path, "/points")
-		GetReceiptPoints(w, r, id)
-		return
-	}
-
-	// Return specific receipt
-	receipt, exists := model.GetReceiptById(path)
-	if !exists {
+	id := mux.Vars(r)["id"]
+	receipt, err := model.GetReceiptByID(config.DB, id)
+	if err != nil {
+		config.Log.Error("Receipt not found", zap.String("id", id), zap.Error(err))
 		http.Error(w, "Receipt not found", http.StatusNotFound)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(receipt)
 }
 
-// POST Method
+// CreateReceipt godoc
+// @Summary Create a receipt
+// @Description Create a new receipt
+// @Tags receipts
+// @Accept json
+// @Produce json
+// @Param receipt body model.Receipt true "Receipt"
+// @Success 200 {object} map[string]string{"id": "string"}
+// @Failure 400 {string} string "Invalid input"
+// @Failure 500 {string} string "Failed to create receipt"
+// @Router /receipt/create [post]
 func ProcessReceipt(w http.ResponseWriter, r *http.Request) {
 	var receipt model.Receipt
-	receipt.Items = []model.Item{} // Initialize Items to an empty slice
-
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields() // Reject unknown fields
-	
-	err := decoder.Decode(&receipt)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&receipt); err != nil {
+		config.Log.Error("Invalid input", zap.Error(err))
+		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
 	// Validate the order
 	if err := model.ValidateReceipt(receipt); err != nil {
+		config.Log.Error("Invalid receipt data", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -79,7 +82,14 @@ func ProcessReceipt(w http.ResponseWriter, r *http.Request) {
 
 	receipt.ID = model.GenerateUniqueID()
 	model.CalculatePoints(&receipt)
-	model.AddReceipt(receipt)
+
+	// AddReceipt
+	if err := model.AddReceipt(config.DB, &receipt); err != nil {
+		config.Log.Error("Failed to create receipt", zap.Error(err))
+		http.Error(w, "Failed to create receipt", http.StatusInternalServerError)
+		return
+	}
+
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(struct {
@@ -89,15 +99,24 @@ func ProcessReceipt(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Updated handler to get points for a specific receipt
-func GetReceiptPoints(w http.ResponseWriter, r *http.Request, id string) {
-	receipt, exists := model.GetReceiptById(id)
-	if !exists {
-		http.Error(w, "Receipt not found, As such, 0 Points", http.StatusNotFound)
+// GetReceiptPoints godoc
+// @Summary Get receipt points by ID
+// @Description Get receipt points by ID
+// @Tags receipts
+// @Produce json
+// @Param id path string true "Receipt ID"
+// @Success 200 {object} map[string]uint{"points": "uint"}
+// @Failure 404 {string} string "Receipt not found"
+// @Router /receipt/{id}/points [get]
+func GetReceiptPoints(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	receipt, err := model.GetReceiptByID(config.DB, id)
+	if err != nil {
+		config.Log.Error("Receipt not found", zap.String("id", id), zap.Error(err))
+		http.Error(w, "Receipt not found", http.StatusNotFound)
 		return
 	}
 
-	//access stored Points for receipt @ ID
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(struct {
 		Points uint `json:"points"`

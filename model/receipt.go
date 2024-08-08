@@ -7,16 +7,18 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"sync"
+	//"sync"
 	"time"
 	"unicode"
-
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Item struct {
+	ID               uint   `gorm:"primary_key" json:"id"`
 	ShortDescription string `json:"shortDescription"`
 	Price            string `json:"price"`
+	ReceiptID        string `json:"receipt_id"`
 }
 
 type Receipt struct {
@@ -25,14 +27,15 @@ type Receipt struct {
 	PurchaseTime string `json:"purchaseTime"`
 	Items        []Item `json:"items"`
 	Total        string `json:"total"`
-	ID           string `json:"id"`
+	ID           string `gorm:"primary_key" json:"id"`
 	Points       uint   `json:"points"`
 }
 
+/*
 var (
 	receipts    = make(map[string]Receipt)
 	receiptsMux sync.Mutex
-)
+) */
 
 func GenerateUniqueID() string {
 	return uuid.New().String()
@@ -121,19 +124,34 @@ func CalculatePoints(receipt *Receipt) {
 	receipt.Points = points
 }
 
+/*
 func AddReceipt(receipt Receipt) {
 	receiptsMux.Lock()
 	receipts[receipt.ID] = receipt
 	receiptsMux.Unlock()
+} */
+
+func AddReceipt(db *gorm.DB, receipt *Receipt) error {
+	return db.Create(receipt).Error
 }
 
+/*
 func GetReceiptById(id string) (Receipt, bool) {
 	receiptsMux.Lock()
 	receipt, exists := receipts[id]
 	receiptsMux.Unlock()
 	return receipt, exists
+} */
+
+func GetReceiptByID(db *gorm.DB, id string) (*Receipt, error) {
+	var receipt Receipt
+	if err := db.Preload("Items").First(&receipt, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &receipt, nil
 }
 
+/*
 func GetAllReceipts() []Receipt {
 	receiptsMux.Lock()
 	defer receiptsMux.Unlock()
@@ -143,6 +161,14 @@ func GetAllReceipts() []Receipt {
 		receiptsList = append(receiptsList, receipt)
 	}
 	return receiptsList
+} */
+
+func GetAllReceipts(db *gorm.DB) ([]Receipt, error) {
+	var receipts []Receipt
+	if err := db.Preload("Items").Find(&receipts).Error; err != nil {
+		return nil, err
+	}
+	return receipts, nil
 }
 
 // Helper Functions:
