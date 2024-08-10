@@ -1,0 +1,39 @@
+# Node.js dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Compiled code
+*.class
+*.o
+*.a
+*.so
+*.dll
+*.exe
+
+# Configuration files
+*.local
+
+# Sensitive information
+*.pem
+*.crt
+
+# Environment files
+.env
+.env.*
