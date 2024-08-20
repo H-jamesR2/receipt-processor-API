@@ -37,3 +37,6 @@ Thumbs.db
 # Environment files
 .env
 .env.*
+
+# Ignore all .out files
+*.out
