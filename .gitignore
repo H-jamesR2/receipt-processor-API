@@ -40,3 +40,7 @@ Thumbs.db
 
 # Ignore all .out files
 *.out
+
+# Ignore internal dockerFiles
+*].yml
+*].Dockerfile
