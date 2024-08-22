@@ -1,41 +1,45 @@
-// config/config.go
-
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
+	//"time"
 
 
-	"rcpt-proc-challenge-ans/model"
+	_ "github.com/jackc/pgx/v5/stdlib" // Import the pgx driver for PostgreSQL
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"database/sql"
+
+	"github.com/pressly/goose/v3"
 )
 
 var (
-	DB  *gorm.DB
+	DB  *pgxpool.Pool
 	Log *zap.Logger
 )
 
 func Init() {
 	initLogger()
 	initDB()
+	runMigrations() // Run database migrations using Goose
 }
 
 func initDB() {
 	var err error
-	dsn := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s",
-		os.Getenv("DB_HOST"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
 
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	dsn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_NAME"))
+
+	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		Log.Fatal("Failed to connect to database", zap.Error(err))
+		Log.Fatal("Unable to parse database configuration", zap.Error(err))
 	}
 
-	err = DB.AutoMigrate(&model.Receipt{}, &model.Item{})
+	DB, err = pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
-		Log.Fatal("Failed to migrate database", zap.Error(err))
+		Log.Fatal("Unable to connect to database", zap.Error(err))
 	}
 }
 
@@ -47,3 +51,19 @@ func initLogger() {
 	}
 }
 
+func runMigrations() {
+	dsn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
+		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_NAME"))
+
+	//db, err := goose.OpenDBWithDriver("postgres", dsn)
+	db, err := sql.Open("pgx", dsn) // Use the "pgx" driver here
+	if err != nil {
+		Log.Fatal("Failed to connect to database for migrations", zap.Error(err))
+	}
+
+	if err := goose.Up(db, "db/migrations"); err != nil {
+		Log.Fatal("Failed to run migrations", zap.Error(err))
+	}
+
+	Log.Info("Database migrations applied successfully")
+}
