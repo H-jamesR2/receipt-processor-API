@@ -9,9 +9,10 @@ import (
 	"rcpt-proc-challenge-ans/config"
 	"rcpt-proc-challenge-ans/model"
 	"regexp"
-	"strings"
+	//"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
@@ -27,15 +28,27 @@ import (
 // @Router /receipts/{id} [get]
 func GetReceipt(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	receipt, err := model.GetReceiptByID(config.DB, id)
+	receiptID, err := uuid.Parse(id)
 	if err != nil {
-		config.Log.Error("Receipt not found", zap.String("id", id), zap.Error(err))
-		http.Error(w, "Receipt not found", http.StatusNotFound)
+		config.Log.Error("Invalid UUID format", zap.Error(err))
+		sendJSONResponse(w, http.StatusBadRequest, 
+			ErrorResponse{Error: "Invalid UUID format"})
+		//http.Error(w, "Invalid UUID format", http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(receipt)
+	receipt, err := model.GetReceiptByID(config.DB, receiptID)
+	if err != nil {
+		config.Log.Error("Receipt not found", zap.String("id", id), zap.Error(err))
+		sendJSONResponse(w, http.StatusNotFound, 
+			ErrorResponse{Error: "Receipt not found"})
+		//http.Error(w, "Receipt not found", http.StatusNotFound)
+		return
+	}
+
+	sendJSONResponse(w, http.StatusOK, receipt)
+	//w.Header().Set("Content-Type", "application/json")
+	//json.NewEncoder(w).Encode(receipt)
 }
 
 // CreateReceipt godoc
@@ -53,19 +66,30 @@ func ProcessReceipt(w http.ResponseWriter, r *http.Request) {
 	var receipt model.Receipt
 	if err := json.NewDecoder(r.Body).Decode(&receipt); err != nil {
 		config.Log.Error("Invalid input", zap.Error(err))
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+		sendJSONResponse(w, http.StatusBadRequest, 
+			ErrorResponse{Error: "Invalid input"})
+		//http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	// Validate the order
-	if err := model.ValidateReceipt(receipt); err != nil {
+	// Clean item descriptions before validation or calculation
+    //cleanItemShortDescriptions(&receipt)
+
+    // Validate the receipt
+    if err := receipt.ValidateReceipt(); err != nil {
 		config.Log.Error("Invalid receipt data", zap.Error(err))
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendJSONResponse(w, http.StatusBadRequest, 
+			ErrorResponse{Error: err.Error()})
+		//http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// run trimming operation for itemShortDescriptions...
-	cleanItemShortDescriptions(&receipt)
+	//model.CleanItemShortDescriptions(&receipt)
+	//cleanItemShortDescriptions(&receipt)
+	// Clean item descriptions
+    receipt.CleanItemShortDescriptions()
+
 	// reformat Date if needed.
 	if formattedDate, err := parseAndFormatDate(receipt.PurchaseDate); err == nil {
 		receipt.PurchaseDate = formattedDate
@@ -80,20 +104,28 @@ func ProcessReceipt(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
-	receipt.ID = model.GenerateUniqueID()
-	model.CalculatePoints(&receipt)
+    // Generate and set the receipt ID
+    receipt.GenerateID()
+	receipt.CalculatePoints()
 
 	// AddReceipt
 	if err := model.AddReceipt(config.DB, &receipt); err != nil {
 		config.Log.Error("Failed to create receipt", zap.Error(err))
-		http.Error(w, "Failed to create receipt", http.StatusInternalServerError)
+		sendJSONResponse(w, http.StatusInternalServerError, 
+			ErrorResponse{Error: "Failed to create receipt"})
+		//http.Error(w, "Failed to create receipt", http.StatusInternalServerError)
 		return
 	}
 
-
+	/*
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(ProcessReceiptResponse{
-		ID: receipt.ID,
+		ID: receipt.ID.String(),
+	})
+	*/
+	sendJSONResponse(w, http.StatusOK, 
+		ProcessReceiptResponse{
+			ID: receipt.ID.String(),
 	})
 }
 
@@ -110,10 +142,21 @@ func ProcessReceipt(w http.ResponseWriter, r *http.Request) {
 // @Router /receipts/{id}/points [get]
 func GetReceiptPoints(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	receipt, err := model.GetReceiptByID(config.DB, id)
+	receiptID, err := uuid.Parse(id)
+	if err != nil {
+		config.Log.Error("Invalid UUID format", zap.Error(err))
+		sendJSONResponse(w, http.StatusBadRequest, 
+			ErrorResponse{Error: "Invalid UUID format"})
+		//http.Error(w, "Invalid UUID format", http.StatusBadRequest)
+		return
+	}
+	
+	receipt, err := model.GetReceiptByID(config.DB, receiptID)
 	if err != nil {
 		config.Log.Error("Receipt not found", zap.String("id", id), zap.Error(err))
-		http.Error(w, "Receipt not found", http.StatusNotFound)
+		sendJSONResponse(w, http.StatusNotFound, 
+			ErrorResponse{Error: "Receipt not found"})
+		//http.Error(w, "Receipt not found", http.StatusNotFound)
 		return
 	}
 
@@ -123,6 +166,29 @@ func GetReceiptPoints(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func GetAllReceipts(w http.ResponseWriter, r *http.Request) {
+	receipts, err := model.GetAllReceipts(config.DB)
+    if err != nil {
+        config.Log.Error("Failed to retrieve receipts", zap.Error(err))
+        sendJSONResponse(w, http.StatusInternalServerError, ErrorResponse{
+            Error: "Failed to retrieve receipts",
+        })
+        return
+    }
+
+
+    if len(receipts) == 0 {
+        sendJSONResponse(w, http.StatusOK, ErrorResponse{
+        	Error: "No receipts found.",
+    	})
+        return
+    }
+
+    sendJSONResponse(w, http.StatusOK, receipts)
+	/*
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(receipts) */
+}
 
 /*
 	Helper Functions
@@ -142,29 +208,31 @@ func parseAndFormatDate(dateStr string) (string, error) {
 
 	// Define possible date formats
 	formats := []string{
-		"2006-01-02", // YYYY-MM-DD
-		"02-01-2006", // DD-MM-YYYY
-		"01/02/2006", // MM/DD/YYYY
-		"2006/01/02", // YYYY/MM/DD
+		"01/02/2006",   // MM/DD/YYYY
+		"02/01/2006",   // DD/MM/YYYY
+		"2006-01-02",   // YYYY-MM-DD
+		"2006/01/02",   // YYYY/MM/DD
+		"Jan 2, 2006",  // Jan 2, 2006
+		"02-Jan-2006",  // 02-Jan-2006
 	}
 
 	var parsedDate time.Time
 	var err error
+	var dateLayout = "2006-01-02"
 
 	// Try parsing with each format
 	for _, format := range formats {
 		if parsedDate, err = time.Parse(format, dateStr); err == nil {
-			break
+			// Successfully parsed the date
+			return parsedDate.Format(dateLayout), nil
 		}
 	}
 
-	// parsed dateStr not a valid dateString.
-	if err != nil {
-		return "", fmt.Errorf("error parsing date %s: %v", dateStr, err)
-	}
+
+	return "", fmt.Errorf("error parsing date %s: %v", dateStr, err)
 
 	// Format date to YYYY-MM-DD
-	return parsedDate.Format("2006-01-02"), nil
+	//return parsedDate.Format("2006-01-02"), nil
 }
 
 // Time Functions
@@ -194,19 +262,16 @@ func parseAndFormatTime(timeStr string) (string, error) {
 	// Try parsing with each format
 	for _, format := range formats {
 		if parsedTime, err = time.Parse(format, timeStr); err == nil {
-			break
+			// Format time to 24-hour clock format
+			return parsedTime.Format("15:04"), nil
 		}
 	}
 
 	// parsed timeStr not a valid timeString.
-	if err != nil {
-		return "", fmt.Errorf("error parsing time %s: %v", timeStr, err)
-	}
-
-	// Format time to 24-hour clock format
-	return parsedTime.Format("15:04"), nil
+	return "", fmt.Errorf("error parsing time %s: %v", timeStr, err)
 }
 
+/*
 // Clean item descriptions by trimming and reducing multiple spaces
 func cleanItemShortDescriptions(receipt *model.Receipt) {
 	for i, item := range receipt.Items {
@@ -218,5 +283,24 @@ func cleanItemShortDescriptions(receipt *model.Receipt) {
 		description = re.ReplaceAllString(description, " ")
 
 		receipt.Items[i].ShortDescription = description
+		//"testing12"
+
+		//config.Log.Info("Cleaned item description", zap.String("description", description))
 	}
 }
+*/
+// CleanItemShortDescriptions cleans the short descriptions of items in a receipt
+/*
+func cleanItemShortDescriptions(receipt *model.Receipt) {
+    for i, item := range receipt.Items {
+        // Trim leading and trailing spaces
+        description := strings.TrimSpace(item.ShortDescription)
+
+        // Replace multiple spaces with a single space
+        re := regexp.MustCompile(`\s+`)
+        description = re.ReplaceAllString(description, " ")
+
+        receipt.Items[i].ShortDescription = description
+    }
+}
+*/

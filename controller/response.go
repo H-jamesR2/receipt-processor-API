@@ -2,6 +2,10 @@
 
 package controller
 
+type ErrorResponse struct {
+    Error string `json:"error"`
+}
+
 // CreateReceiptResponse represents the response for creating a receipt
 type ProcessReceiptResponse struct {
     ID string `json:"id"`
