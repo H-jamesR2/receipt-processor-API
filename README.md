@@ -5,6 +5,7 @@
 2. [API-Specs-Summary](#Summary-of-API-Specification)
 3. [Running-the-Server](#Running-the-Server)
 4. [Testing-the-API](#Testing-the-API)
+5. [Running-Unit-Tests](#running-unit-tests)
 
 
 ## Description:
@@ -178,33 +179,51 @@ take as much time as you need to complete the work. -->
 ---
 
 
-### Running-the-Server
-#### Setup:
-1. Either, Just run the **dockerFile**
-2. OR install dependencies manually (Go + UUID Library).
+## Running-the-Server
 
-##### Run the Docker file
-1. Assuming you have docker installed, and that the docker daemon is running
-  - build the docker image:
-  - `docker build -f dockerFiles/test.Dockerfile  -t receipt_api .`
-2. Run the docker container:
-- `docker run -p 8080:8080 receipt_api`
-3. GoTo [Testing-the-API](#Testing-the-API) for sample curl examples.
+### Environment Setup
 
+#### Requirements:
+- Docker
+- PostgreSQL
 
-##### Manual-Installation-of-Dependencies:
-1. Ensure that you have goLang installed (version used: go 1.22.4)
-2. Initalize go modules `go mod init`.
-3. Then run `go mod tidy`.
-4. Ensure that you have google's uuid library. [not sure if you have to install this directly OR those 2 previous commands are enough?]
-  - To install google's UUID library use:
-  - `go get github.com/google/uuid` OR
-  - `go install github.com/google/uuid@latest`
-  - (if not) install github.com/google/uuid by running `go mod tidy`.
-5. Run the server using `go run main.go` from the project root directory.
-6. GoTo [Testing-the-API](#Testing-the-API) for sample curl examples.
+#### .env File Setup:
+You must have a `.env` file in the `dockerFiles` and root directory containing the following:
 
+```env
+DB_HOST=db
+DB_USER=<your_db_user>
+DB_PASSWORD=<your_db_password>
+DB_NAME=<your_db_name>
+PORT=8080
 
+TEST_DB_HOST=localhost
+TEST_DB_USER=postgres
+TEST_DB_PASSWORD=<your_test_db_password>
+TEST_DB_NAME=<your_test_db_name>
+TEST_DB_PORT=5435
+```
+
+### Reset Directives
+
+To reset Docker, including volumes and images, use the following commands:
+
+```sh
+docker system df
+docker-compose -f dockerFiles/docker-compose.yml down --rmi all -v --remove-orphans
+docker system prune -a --volumes -f
+docker system df
+```
+
+### Building and Running the Docker Containers
+
+To build and run the Docker containers, execute:
+
+```sh
+docker-compose -f dockerFiles/docker-compose.yml up --build
+```
+
+This will start the application on the specified port (default is 8080).
 
 ### Testing-the-API
 
@@ -214,28 +233,42 @@ add " | jq" at end of each curl statement below to get cleaner json format...
 #### Create a new receipt (`POST`):
 ```sh
 curl -X POST http://localhost:8080/receipts/process -H "Content-Type: application/json" -d '{
-  "retailer": "Target",
-  "purchaseDate": "2022-01-01",
-  "purchaseTime": "13:01",
-  "items": [
-    {
-      "shortDescription": "Mountain Dew 12PK",
-      "price": "6.49"
-    },{
-      "shortDescription": "Emils Cheese Pizza",
-      "price": "12.25"
-    },{
-      "shortDescription": "Knorr Creamy Chicken",
-      "price": "1.26"
-    },{
-      "shortDescription": "Doritos Nacho Cheese",
-      "price": "3.35"
-    },{
-      "shortDescription": "   Klarbrunn 12-PK 12 FL OZ  ",
-      "price": "12.00"
-    }
-  ],
-  "total": "35.35"
+    "retailer": "Target",
+    "purchaseDate": "2022-01-01",
+    "purchaseTime": "13:01",
+    "total": "35.35",
+    "items": [
+        {
+            "sku": "TGT-BVRG-MTNDEW-SODA-SIZE-12PK-00001",
+            "shortDescription": "Mountain Dew 12PK",
+            "quantity": 1,
+            "pricePaid": "6.49"
+        },
+        {
+            "sku": "TGT-FOOD-EMILS-PIZZA-TYPE-CHEESE-00002",
+            "shortDescription": "Emils Cheese Pizza",
+            "quantity": 1,
+            "pricePaid": "12.25"
+        },
+        {
+            "sku": "TGT-FOOD-KNORR-SOUP-FLVR-CHICKEN-00003",
+            "shortDescription": "Knorr Creamy Chicken",
+            "quantity": 1,
+            "pricePaid": "1.26"
+        },
+        {
+            "sku": "TGT-SNCK-DORITOS-CHIPS-FLVR-NACHO-00004",
+            "shortDescription": "Doritos Nacho Cheese",
+            "quantity": 1,
+            "pricePaid": "3.35"
+        },
+        {
+            "sku": "TGT-BVRG-KLARBRUNN-WATER-SIZE-12PK-00005",
+            "shortDescription": "   Klarbrunn 12-PK 12 FL OZ  ",
+            "quantity": 1,
+            "pricePaid": "12.00"
+        }
+    ]
 }'
 ```
 
@@ -267,3 +300,46 @@ curl http://localhost:8080/receipts/RECEIPT_ID/points
 ```sh
 curl http://localhost:8080/rcpt
 ```
+
+Here’s the updated section for running unit tests, including the instruction to change into the `model` directory first:
+
+---
+
+## Running-Unit-Tests
+#### Requirements:
+- PostgreSQL
+- Postgres App (Optional but Ideal)
+
+### Running Tests Locally in model
+
+To run unit tests, follow these steps:
+1. Ensure PostgreSQL is Running:
+  Before running the tests, make sure that PostgreSQL is running and configured with the correct host, user, password, database name, and port as specified in your .env file.
+  - Ideally do this in the Postgres app.
+  - You are free to create a Server in your Postgres app with matching host, user, password, database name, and port as is in receipt_test.go or change the "DBConfig" to your needs.
+
+
+2. **Navigate to the `model` Directory**:
+   Change into the `model` directory where the test files are located:
+
+   ```sh
+   cd model
+   ```
+
+3. **Reset the Test Database**:
+   Ensure the test database is reset to avoid conflicts with existing data.
+
+4. **Run the Tests**:
+   Use the following command to run the tests:
+
+   ```sh
+   go test -v ./...
+   ```
+
+5. **Check Coverage**:
+   To check the test coverage, run:
+
+   ```sh
+   go test -coverprofile=coverage.out
+   go tool cover -html=coverage.out
+   ```
