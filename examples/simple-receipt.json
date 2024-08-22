@@ -1,9 +1,14 @@
 {
     "retailer": "Target",
-    "purchaseDate": "2022-01-02",
-    "purchaseTime": "13:13",
-    "total": "1.25",
+    "purchaseDate": "2022-01-04",
+    "purchaseTime": "11:45",
+    "total": "49.99",
     "items": [
-        {"shortDescription": "Pepsi - 12-oz", "price": "1.25"}
+        {
+            "sku": "TGT-CLTH-LEVIS-JEAN-SIZE-32-COLOR-BLUE-54321",
+            "shortDescription": "Levi's Blue Jeans - Size 32",
+            "quantity": 1,
+            "pricePaid": "49.99"
+        }
     ]
 }

@@ -2,23 +2,13 @@
     "retailer": "M&M Corner Market",
     "purchaseDate": "2022-03-20",
     "purchaseTime": "14:33",
+    "total": "9.00",
     "items": [
         {
+            "sku": "MCM-BVRG-GATORADE-DRINK-SIZE-20OZ-00001",
             "shortDescription": "Gatorade",
-            "price": "2.25"
-        },
-        {
-            "shortDescription": "Gatorade",
-            "price": "2.25"
-        },
-        {
-            "shortDescription": "Gatorade",
-            "price": "2.25"
-        },
-        {
-            "shortDescription": "Gatorade",
-            "price": "2.25"
+            "quantity": 4,
+            "pricePaid": "9.00"
         }
-    ],
-    "total": "9.00"
+    ]
 }

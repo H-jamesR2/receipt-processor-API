@@ -2,27 +2,38 @@
     "retailer": "Target",
     "purchaseDate": "2022-01-01",
     "purchaseTime": "13:01",
+    "total": "35.35",
     "items": [
         {
+            "sku": "TGT-BVRG-MTNDEW-SODA-SIZE-12PK-00001",
             "shortDescription": "Mountain Dew 12PK",
-            "price": "6.49"
+            "quantity": 1,
+            "pricePaid": "6.49"
         },
         {
+            "sku": "TGT-FOOD-EMILS-PIZZA-TYPE-CHEESE-00002",
             "shortDescription": "Emils Cheese Pizza",
-            "price": "12.25"
+            "quantity": 1,
+            "pricePaid": "12.25"
         },
         {
+            "sku": "TGT-FOOD-KNORR-SOUP-FLVR-CHICKEN-00003",
             "shortDescription": "Knorr Creamy Chicken",
-            "price": "1.26"
+            "quantity": 1,
+            "pricePaid": "1.26"
         },
         {
+            "sku": "TGT-SNCK-DORITOS-CHIPS-FLVR-NACHO-00004",
             "shortDescription": "Doritos Nacho Cheese",
-            "price": "3.35"
+            "quantity": 1,
+            "pricePaid": "3.35"
         },
         {
+            "sku": "TGT-BVRG-KLARBRUNN-WATER-SIZE-12PK-00005",
             "shortDescription": "   Klarbrunn 12-PK 12 FL OZ  ",
-            "price": "12.00"
+            "quantity": 1,
+            "pricePaid": "12.00"
         }
-    ],
-    "total": "35.35"
+    ]
 }
+

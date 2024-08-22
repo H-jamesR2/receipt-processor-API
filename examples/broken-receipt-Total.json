@@ -1,0 +1,20 @@
+{
+    "retailer": "Walmart",
+    "purchaseDate": "2022-01-02",
+    "purchaseTime": "05:00",
+    "total": "11.00",
+    "items": [
+        {
+            "sku": "WMT-BVRG-PEPSI-SODA-SIZE-12OZ-00001",
+            "shortDescription": "Pepsi - 12-oz",
+            "quantity": 10,
+            "pricePaid": "6.25"
+        },
+        {
+            "sku": "WMT-BVRG-PEPSI-ZEROSUGAR-SIZE-12OZ-00002",
+            "shortDescription": "Pepsi Zero Sugar - 12-oz",
+            "quantity": 12,
+            "pricePaid": "8.00"
+        }
+    ]
+}
