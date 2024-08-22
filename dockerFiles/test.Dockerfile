@@ -1,23 +1,42 @@
-# Use the official Golang 1.22 image as a base
-FROM golang:1.22-alpine
+# Stage 1: Build the Go application using the official Go Alpine image
+FROM golang:1.22.4-alpine AS builder
 
-# Set the working directory inside the container
+# Install necessary build dependencies
+RUN apk add --no-cache git curl build-base \
+    && go install github.com/pressly/goose/v3/cmd/goose@latest
+
+# Set the working directory
 WORKDIR /app
 
-# Copy the go.mod and go.sum files
+# Copy go.mod and go.sum files
 COPY go.mod go.sum ./
 
-# Download the dependencies
+# Download Go modules dependencies
 RUN go mod download
 
-# Copy the rest of the application code
+# Copy the source code
 COPY . .
 
-# Build the application
-RUN go build -o /app/main .
+# Build the Go application
+RUN go build -o main .
 
-# Expose the port the application runs on
+# Stage 2: Create a minimal runtime image using Alpine
+FROM alpine:3.18.3
+
+# Install necessary runtime dependencies
+RUN apk add --no-cache ca-certificates curl
+
+# Set the working directory in the final image
+WORKDIR /app
+
+# Copy the compiled binary and goose from the builder stage
+COPY --from=builder /go/bin/goose /usr/local/bin/goose
+COPY --from=builder /app/main /app/main
+COPY --from=builder /app/db/migrations /app/db/migrations
+
+# Expose the port the app will run on
 EXPOSE 8080
 
-# Run the application
-CMD ["/app/main"]
+# Command to run migrations and start the server
+CMD ["./main"]
+

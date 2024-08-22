@@ -1,0 +1,43 @@
+services:
+  app:
+    build: 
+      context: ..
+      dockerfile: dockerFiles/test.Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../.env:/app/.env  # Explicitly mount the .env file into the container
+    environment:
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME}
+    command: sh -c "
+      until goose -dir db/migrations postgres \"postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:5432/$DB_NAME?sslmode=disable\" up;
+      do
+        echo 'Waiting for the database...';
+        sleep 2;
+      done;
+      ./main"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
