@@ -23,3 +23,15 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		)
 	})
 }
+
+/*
+// Add this to your middleware package
+func PreProcessLoggingMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        config.Log.Info("Incoming request",
+            zap.String("method", r.Method),
+            zap.String("path", r.URL.Path),
+            zap.String("rawPath", r.URL.RawPath))
+        next.ServeHTTP(w, r)
+    })
+} */
